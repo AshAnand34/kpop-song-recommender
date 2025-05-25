@@ -9,6 +9,7 @@ import time
 import logging
 from time import sleep
 import nltk
+import base64
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": ["https://kpop-moodify.netlify.app", "http://localhost:3000"], "methods": ["GET", "POST", "OPTIONS"]}}, supports_credentials=True)
@@ -33,13 +34,21 @@ if not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET:
 
 # Function to get Spotify access token
 def get_spotify_access_token():
+    client_id = os.getenv('SPOTIFY_CLIENT_ID')
+    client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
+    if not client_id or not client_secret:
+        raise ValueError("Spotify client ID and secret must be set in environment variables.")
+
+    # Encode client_id and client_secret in Base64
+    auth_header = base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
     url = "https://accounts.spotify.com/api/token"
     headers = {
-        "Authorization": f"Basic {os.getenv('SPOTIFY_CLIENT_ID')}:{os.getenv('SPOTIFY_CLIENT_SECRET')}"
+        "Authorization": f"Basic {auth_header}"
     }
     data = {"grant_type": "client_credentials"}
+
     response = requests.post(url, headers=headers, data=data)
-    response.raise_for_status()
+    response.raise_for_status()  # Raise an error for bad responses
     return response.json()["access_token"]
 
 # Refresh Spotify token manually
