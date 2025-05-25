@@ -230,11 +230,16 @@ def health_check():
     return jsonify({"status": "healthy"})
 
 if __name__ == '__main__':
+    # Set a custom NLTK data directory
+    nltk_data_dir = os.path.join(os.path.dirname(__file__), 'nltk_data')
+    os.makedirs(nltk_data_dir, exist_ok=True)
+    os.environ['NLTK_DATA'] = nltk_data_dir
+
     # Ensure required NLTK data is downloaded during startup
-    nltk_data_packages = ["punkt", "punkt_tab" "averaged_perceptron_tagger", "wordnet"]
+    nltk_data_packages = ["punkt", "averaged_perceptron_tagger", "wordnet"]
     for package in nltk_data_packages:
         try:
-            nltk.download(package)
+            nltk.download(package, download_dir=nltk_data_dir)
         except Exception as e:
             print(f"Error downloading NLTK package {package}: {e}")
     
