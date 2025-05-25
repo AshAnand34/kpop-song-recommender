@@ -255,6 +255,7 @@ try:
 except Exception as e:
     logger.error(f"Write permissions test for nltk_data directory failed: {e}")
 
-# Start the Flask app
-port = int(os.environ.get('PORT', 5000))
-app.run(host="0.0.0.0", port=port)
+if __name__ == '__main__':
+    # Start the Flask app
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host="0.0.0.0", port=port)
