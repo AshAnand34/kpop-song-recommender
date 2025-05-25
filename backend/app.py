@@ -18,6 +18,10 @@ CORS(app, resources={r"/*": {"origins": ["https://kpop-moodify.netlify.app", "ht
 # Load environment variables
 load_dotenv()
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Initialize MoodDetector lazily
 mood_detector = None
 
@@ -75,10 +79,6 @@ def remove_duplicates(recommendations):
             unique_songs.append(song)
             seen_ids.add(song_id)
     return unique_songs
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Reduce the number of concurrent threads for Spotify API calls
 MAX_THREADS = 5  # Limit the number of threads to reduce memory usage
@@ -245,6 +245,16 @@ if __name__ == '__main__':
     
     # Ensure required TextBlob corpora are downloaded during startup
     download_corpora()
+
+    # Test write permissions for the nltk_data directory
+    try:
+        test_file_path = os.path.join(nltk_data_dir, 'test_write.txt')
+        with open(test_file_path, 'w') as test_file:
+            test_file.write('Write test successful.')
+        os.remove(test_file_path)  # Clean up after the test
+        logger.info("Write permissions for nltk_data directory verified.")
+    except Exception as e:
+        logger.error(f"Write permissions test for nltk_data directory failed: {e}")
 
     # Start the Flask app
     port = int(os.environ.get('PORT', 5000))
