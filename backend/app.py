@@ -8,6 +8,7 @@ import threading
 import time
 import logging
 from time import sleep
+import nltk
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": ["https://kpop-moodify.netlify.app", "http://localhost:3000"], "methods": ["GET", "POST", "OPTIONS"]}}, supports_credentials=True)
@@ -219,5 +220,14 @@ def health_check():
     return jsonify({"status": "healthy"})
 
 if __name__ == '__main__':
+    # Ensure required NLTK data is downloaded during startup
+    nltk_data_packages = ["punkt", "averaged_perceptron_tagger", "wordnet"]
+    for package in nltk_data_packages:
+        try:
+            nltk.download(package)
+        except Exception as e:
+            print(f"Error downloading NLTK package {package}: {e}")
+    
+    # Start the Flask app
     port = int(os.environ.get('PORT', 5000))
     app.run(host="0.0.0.0", port=port)
