@@ -17,29 +17,17 @@ class MoodDetector:
         try:
             self.nlp = spacy.load("en_core_web_sm")
         except:
-            # If model is not installed, download it
-            try:
-                spacy.cli.download("en_core_web_sm")
-                self.nlp = spacy.load("en_core_web_sm")
-            except:
-                self.nlp = None
-                print("SpaCy model could not be loaded. Using fallback options.")
+            spacy.cli.download("en_core_web_sm")
+            self.nlp = spacy.load("en_core_web_sm")
         
         # Sentiment analyzer
         self.sia = SentimentIntensityAnalyzer()
         
-        # Zero-shot classifier for more complex mood detection
-        self.zero_shot = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
-        
-        # Emotion classifier
-        try:
-            model_name = "j-hartmann/emotion-english-distilroberta-base"
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-            self.model = AutoModelForSequenceClassification.from_pretrained(model_name)
-            self.emotion_classifier = pipeline("text-classification", model=model_name, tokenizer=self.tokenizer)
-        except:
-            self.emotion_classifier = None
-            print("Emotion classifier could not be loaded. Using fallback options.")
+        # Lazy load the zero-shot classifier
+        self.zero_shot = None
+
+        # Lazy load the emotion classifier
+        self.emotion_classifier = None
         
         # Base moods and their related keywords
         self.mood_clusters = {
@@ -71,9 +59,10 @@ class MoodDetector:
                                 break
         
         # Use the emotion classifier if available
-        if self.emotion_classifier:
+        emotion_classifier = self.get_emotion_classifier()
+        if emotion_classifier:
             try:
-                emotion_result = self.emotion_classifier(text)[0]
+                emotion_result = emotion_classifier(text)[0]
                 emotion_label = emotion_result['label']
                 # Map emotion label to appropriate keywords
                 if emotion_label == 'joy':
@@ -107,7 +96,7 @@ class MoodDetector:
         """
         # First, try standard classification to get a primary mood
         candidate_moods = list(self.mood_clusters.keys())
-        result = self.zero_shot(text, candidate_labels=candidate_moods)
+        result = self.get_zero_shot_classifier()(text, candidate_labels=candidate_moods)
         primary_mood = result['labels'][0]  # The mood with highest confidence
         confidence = result['scores'][0]
         
@@ -128,6 +117,21 @@ class MoodDetector:
         
         # Return both the primary mood and the keywords
         return primary_mood, top_keywords
+
+    # Lazy load zero-shot classifier when needed
+    def get_zero_shot_classifier(self):
+        if self.zero_shot is None:
+            self.zero_shot = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+        return self.zero_shot
+
+    # Lazy load emotion classifier when needed
+    def get_emotion_classifier(self):
+        if self.emotion_classifier is None:
+            model_name = "j-hartmann/emotion-english-distilroberta-base"
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            self.model = AutoModelForSequenceClassification.from_pretrained(model_name)
+            self.emotion_classifier = pipeline("text-classification", model=model_name, tokenizer=self.tokenizer)
+        return self.emotion_classifier
 
 # Example usage
 if __name__ == "__main__":

@@ -86,7 +86,7 @@ def recommend():
         response = requests.get(url, headers=headers)
         return response.json()
 
-    urls = [f'https://api.spotify.com/v1/search?q={query}&type=track&limit=50&offset={offset}' for offset in range(0, 200, 50)]
+    urls = [f'https://api.spotify.com/v1/search?q={query}&type=track&limit=20&offset={offset}' for offset in range(0, 100, 20)]
 
     with ThreadPoolExecutor() as executor:
         results_list = list(executor.map(fetch_page, urls))
