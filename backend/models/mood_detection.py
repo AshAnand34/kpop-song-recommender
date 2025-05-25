@@ -15,12 +15,12 @@ class MoodDetector:
             
         # Load SpaCy for NLP processing
         try:
-            self.nlp = spacy.load("en_core_web_md")
+            self.nlp = spacy.load("en_core_web_sm")
         except:
             # If model is not installed, download it
             try:
-                spacy.cli.download("en_core_web_md")
-                self.nlp = spacy.load("en_core_web_md")
+                spacy.cli.download("en_core_web_sm")
+                self.nlp = spacy.load("en_core_web_sm")
             except:
                 self.nlp = None
                 print("SpaCy model could not be loaded. Using fallback options.")
