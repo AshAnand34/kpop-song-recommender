@@ -3,8 +3,6 @@ from models.mood_detection import MoodDetector
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
-from spotipy import Spotify
-from spotipy.oauth2 import SpotifyClientCredentials
 import requests
 import threading
 import time
@@ -32,22 +30,26 @@ SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
 if not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET:
     raise ValueError("Spotify client ID and secret must be set in environment variables.")
 
-# Initialize Spotify client
-spotify = Spotify(client_credentials_manager=SpotifyClientCredentials(
-    client_id=SPOTIFY_CLIENT_ID,
-    client_secret=SPOTIFY_CLIENT_SECRET
-))
+# Function to get Spotify access token
+def get_spotify_access_token():
+    url = "https://accounts.spotify.com/api/token"
+    headers = {
+        "Authorization": f"Basic {os.getenv('SPOTIFY_CLIENT_ID')}:{os.getenv('SPOTIFY_CLIENT_SECRET')}"
+    }
+    data = {"grant_type": "client_credentials"}
+    response = requests.post(url, headers=headers, data=data)
+    response.raise_for_status()
+    return response.json()["access_token"]
 
-# Global variable to store the Spotify token
-global_token_info = None
-
+# Refresh Spotify token manually
 def refresh_spotify_token():
     global global_token_info
     while True:
-        global_token_info = spotify.client_credentials_manager.get_access_token()
-        if not global_token_info:
-            raise ValueError("Failed to obtain Spotify API token.")
-        print("Spotify token refreshed.")
+        try:
+            global_token_info = {"access_token": get_spotify_access_token()}
+            logger.info("Spotify token refreshed.")
+        except Exception as e:
+            logger.error(f"Failed to refresh Spotify token: {e}")
         time.sleep(3600)  # Refresh every hour
 
 # Start the token refresh thread
@@ -55,7 +57,7 @@ threading.Thread(target=refresh_spotify_token, daemon=True).start()
 
 def remove_duplicates(recommendations):
     unique_songs = []
-    seen_ids = set()
+    seen_ids = set()  # Use a set for faster lookups
     for song in recommendations:
         song_id = song.get('title')
         if song_id and song_id not in seen_ids:
@@ -135,7 +137,8 @@ def recommend():
         results_list = list(executor.map(lambda url: fetch_page(url, headers), urls))
 
     songs = []
-    artist_ids = []
+    # Use a set for artist IDs to ensure uniqueness
+    artist_ids = set()
     track_items = []
 
     for results in results_list:
@@ -146,10 +149,12 @@ def recommend():
 
         for item in results.get('tracks', {}).get('items', []):
             track_items.append(item)
-            artist_ids.append(item['artists'][0]['id'])  # Collect artist IDs
+            artist_ids.add(item['artists'][0]['id'])  # Add to set for uniqueness
+
+    # Convert artist_ids back to a list for further processing
+    unique_artist_ids = list(artist_ids)
 
     # Fetch artist details in parallel with limited threads
-    unique_artist_ids = list(set(artist_ids))  # Remove duplicate artist IDs
     artist_genre_map = {}
 
     with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
