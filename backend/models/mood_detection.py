@@ -125,13 +125,13 @@ class MoodDetector:
     # Lazy load zero-shot classifier when needed
     def get_zero_shot_classifier(self):
         if self.zero_shot is None:
-            self.zero_shot = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+            self.zero_shot = pipeline("zero-shot-classification", model="valhalla/distilbart-mnli-12-1")
         return self.zero_shot
 
     # Lazy load emotion classifier when needed
     def get_emotion_classifier(self):
         if self.emotion_classifier is None:
-            model_name = "j-hartmann/emotion-english-distilroberta-base"
+            model_name = "bhadresh-savani/distilbert-base-uncased-emotion"
             self.tokenizer = AutoTokenizer.from_pretrained(model_name)
             self.model = AutoModelForSequenceClassification.from_pretrained(model_name)
             self.emotion_classifier = pipeline("text-classification", model=model_name, tokenizer=self.tokenizer)

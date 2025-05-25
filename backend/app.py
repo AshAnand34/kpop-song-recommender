@@ -15,8 +15,14 @@ CORS(app, resources={r"/*": {"origins": "https://kpop-moodify.netlify.app", "met
 # Load environment variables
 load_dotenv()
 
-# Preload the MoodDetector model
-mood_detector = MoodDetector()
+# Initialize MoodDetector lazily
+mood_detector = None
+
+def get_mood_detector():
+    global mood_detector
+    if not mood_detector:
+        mood_detector = MoodDetector()
+    return mood_detector
 
 # Spotify API setup
 SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
@@ -64,10 +70,15 @@ def recommend():
     mood_input = request.json.get('mood_input', 'happy')
 
     # Use enhanced MoodDetector to analyze the mood and extract keywords
-    primary_mood, mood_keywords = mood_detector.detect_mood(mood_input)
-    
+    mood_detector_instance = get_mood_detector()
+    primary_mood, mood_keywords = mood_detector_instance.detect_mood(mood_input)
+
     print(f"Detected primary mood: {primary_mood}")
     print(f"Extracted mood keywords: {mood_keywords}")
+
+    # Ensure mood_keywords is defined and used correctly
+    if not mood_keywords:
+        mood_keywords = [primary_mood]
 
     # Build a query using the detected mood keywords
     # Limit to top 3 keywords to keep search focused
