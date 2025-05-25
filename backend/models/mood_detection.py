@@ -136,11 +136,3 @@ class MoodDetector:
             self.model = AutoModelForSequenceClassification.from_pretrained(model_name)
             self.emotion_classifier = pipeline("text-classification", model=model_name, tokenizer=self.tokenizer)
         return self.emotion_classifier
-
-# Example usage
-if __name__ == "__main__":
-    detector = MoodDetector()
-    user_input = "I'm feeling really energetic and ready to dance all night!"
-    primary_mood, keywords = detector.detect_mood(user_input)
-    print(f"Primary mood: {primary_mood}")
-    print(f"Mood keywords: {keywords}")

@@ -8,9 +8,11 @@ from spotipy.oauth2 import SpotifyClientCredentials
 import requests
 import threading
 import time
+import logging
+from time import sleep
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "https://kpop-moodify.netlify.app", "methods": ["GET", "POST", "OPTIONS"]}}, supports_credentials=True)
+CORS(app, resources={r"/*": {"origins": ["https://kpop-moodify.netlify.app", "http://localhost:3000"], "methods": ["GET", "POST", "OPTIONS"]}}, supports_credentials=True)
 
 # Load environment variables
 load_dotenv()
@@ -61,8 +63,38 @@ def remove_duplicates(recommendations):
             seen_ids.add(song_id)
     return unique_songs
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Reduce the number of concurrent threads for Spotify API calls
 MAX_THREADS = 5  # Limit the number of threads to reduce memory usage
+
+def fetch_with_retries(url, headers, retries=3, backoff_factor=1):
+    """Fetch a URL with retries and exponential backoff."""
+    for attempt in range(retries):
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()  # Raise an HTTPError for bad responses (4xx and 5xx)
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching URL {url}: {e}")
+            if attempt < retries - 1:
+                sleep_time = backoff_factor * (2 ** attempt)
+                logger.info(f"Retrying in {sleep_time} seconds...")
+                sleep(sleep_time)
+            else:
+                logger.error(f"Failed to fetch URL {url} after {retries} attempts.")
+                return None
+
+# Define fetch_page to use fetch_with_retries
+def fetch_page(url, headers):
+    return fetch_with_retries(url, headers)
+
+# Define fetch_artist_details to use fetch_with_retries
+def fetch_artist_details(artist_id, headers):
+    artist_url = f'https://api.spotify.com/v1/artists/{artist_id}'
+    return fetch_with_retries(artist_url, headers)
 
 @app.route('/recommend', methods=['POST'])
 def recommend():
@@ -73,8 +105,8 @@ def recommend():
     mood_detector_instance = get_mood_detector()
     primary_mood, mood_keywords = mood_detector_instance.detect_mood(mood_input)
 
-    print(f"Detected primary mood: {primary_mood}")
-    print(f"Extracted mood keywords: {mood_keywords}")
+    logger.info(f"Detected primary mood: {primary_mood}")
+    logger.info(f"Extracted mood keywords: {mood_keywords}")
 
     # Ensure mood_keywords is defined and used correctly
     if not mood_keywords:
@@ -84,8 +116,8 @@ def recommend():
     # Limit to top 3 keywords to keep search focused
     top_keywords = mood_keywords[:3]
     query = f"{' '.join(top_keywords)} kpop"
-    
-    print(f"Search query: {query}")
+
+    logger.info(f"Search query: {query}")
 
     # Use the global token
     access_token = global_token_info['access_token']
@@ -96,52 +128,49 @@ def recommend():
     # Make the Spotify API call manually and handle pagination using threading
     from concurrent.futures import ThreadPoolExecutor
 
-    def fetch_page(url):
-        response = requests.get(url, headers=headers)
-        return response.json()
-
     urls = [f'https://api.spotify.com/v1/search?q={query}&type=track&limit=20&offset={offset}' for offset in range(0, 100, 20)]
 
     # Use ThreadPoolExecutor with a limited number of threads
     with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
-        results_list = list(executor.map(fetch_page, urls))
+        results_list = list(executor.map(lambda url: fetch_page(url, headers), urls))
 
     songs = []
     artist_ids = []
     track_items = []
 
     for results in results_list:
-        print(f"Spotify API response: {results}")
+        if results is None:
+            logger.warning("Skipping a failed Spotify API response.")
+            continue
+        logger.info(f"Spotify API response: {results}")
 
-        for item in results['tracks']['items']:
+        for item in results.get('tracks', {}).get('items', []):
             track_items.append(item)
             artist_ids.append(item['artists'][0]['id'])  # Collect artist IDs
 
     # Fetch artist details in parallel with limited threads
-    def fetch_artist_details(artist_id):
-        artist_url = f'https://api.spotify.com/v1/artists/{artist_id}'
-        artist_response = requests.get(artist_url, headers=headers)
-        return artist_response.json()
-
     unique_artist_ids = list(set(artist_ids))  # Remove duplicate artist IDs
     artist_genre_map = {}
 
     with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
-        artist_details_list = list(executor.map(fetch_artist_details, unique_artist_ids))
+        artist_details_list = list(executor.map(lambda artist_id: fetch_artist_details(artist_id, headers), unique_artist_ids))
 
     for artist_details in artist_details_list:
+        if artist_details is None:
+            logger.warning("Skipping a failed artist details response.")
+            continue
         artist_id = artist_details.get('id')
         if artist_id:  # Check if 'id' exists in artist_details
             artist_genre_map[artist_id] = artist_details.get('genres', [])
         else:
-            app.logger.warning(f"Missing 'id' in artist details: {artist_details}")
+            logger.warning(f"Missing 'id' in artist details: {artist_details}")
 
     # Process tracks and filter by KPOP genre
     for item in track_items:
         artist_id = item['artists'][0]['id']
         artist_genres = artist_genre_map.get(artist_id, [])
 
-        print(f"Artist ID: {artist_id}, Genres: {artist_genres}")
+        logger.info(f"Artist ID: {artist_id}, Genres: {artist_genres}")
 
         # Check if 'k-pop' is in the artist's genres
         if 'k-pop' in artist_genres:
@@ -154,26 +183,24 @@ def recommend():
 
     # If no songs found, try a more generic search
     if not songs:
-        print("No songs found with specific mood. Trying more general search.")
+        logger.info("No songs found with specific mood. Trying more general search.")
         generic_query = "kpop"
         generic_url = f'https://api.spotify.com/v1/search?q={generic_query}&type=track&limit=20'
-        response = requests.get(generic_url, headers=headers)
-        results = response.json()
-        
-        for item in results['tracks']['items']:
-            artist_id = item['artists'][0]['id']
-            artist_url = f'https://api.spotify.com/v1/artists/{artist_id}'
-            artist_response = requests.get(artist_url, headers=headers)
-            artist_details = artist_response.json()
-            artist_genres = artist_details.get('genres', [])
-            
-            if 'k-pop' in artist_genres:
-                songs.append({
-                    'title': item['name'],
-                    'artist': ', '.join(artist['name'] for artist in item['artists']),
-                    'link': item['external_urls']['spotify'],
-                    'mood': 'general'  # Generic mood
-                })
+        results = fetch_with_retries(generic_url, headers)
+        if results:
+            for item in results.get('tracks', {}).get('items', []):
+                artist_id = item['artists'][0]['id']
+                artist_url = f'https://api.spotify.com/v1/artists/{artist_id}'
+                artist_details = fetch_with_retries(artist_url, headers)
+                if artist_details:
+                    artist_genres = artist_details.get('genres', [])
+                    if 'k-pop' in artist_genres:
+                        songs.append({
+                            'title': item['name'],
+                            'artist': ', '.join(artist['name'] for artist in item['artists']),
+                            'link': item['external_urls']['spotify'],
+                            'mood': 'general'  # Generic mood
+                        })
 
     unique_songs = remove_duplicates(songs)  # Remove duplicate songs
     return jsonify(unique_songs)

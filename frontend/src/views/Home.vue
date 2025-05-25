@@ -63,9 +63,16 @@ export default {
         const response = await axios.post(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.RECOMMEND}`, {
           mood_input: selectedMood
         });
+        if (!response.data || response.data.length === 0) {
+          this.errorMessage = 'No recommendations found for the selected mood. Please try again.';
+          return [];
+        }
+        this.errorMessage = ''; // Clear any previous error messages
         return response.data;
       } catch (error) {
         console.error('Error fetching song recommendations:', error);
+        this.errorMessage = 'An error occurred while fetching recommendations. Please try again later.';
+        return [];
       }
     },
     async handleMoodSelected(mood) {
