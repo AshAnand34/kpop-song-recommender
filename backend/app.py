@@ -229,33 +229,32 @@ def home():
 def health_check():
     return jsonify({"status": "healthy"})
 
-if __name__ == '__main__':
-    # Set a custom NLTK data directory
-    nltk_data_dir = os.path.join(os.path.dirname(__file__), 'nltk_data')
-    os.makedirs(nltk_data_dir, exist_ok=True)
-    os.environ['NLTK_DATA'] = nltk_data_dir
+# Set a custom NLTK data directory
+nltk_data_dir = os.path.join(os.path.dirname(__file__), 'nltk_data')
+os.makedirs(nltk_data_dir, exist_ok=True)
+os.environ['NLTK_DATA'] = nltk_data_dir
 
-    # Ensure required NLTK data is downloaded during startup
-    nltk_data_packages = ["punkt", "averaged_perceptron_tagger", "wordnet"]
-    for package in nltk_data_packages:
-        try:
-            nltk.download(package, download_dir=nltk_data_dir)
-        except Exception as e:
-            print(f"Error downloading NLTK package {package}: {e}")
-    
-    # Ensure required TextBlob corpora are downloaded during startup
-    download_corpora()
-
-    # Test write permissions for the nltk_data directory
+# Ensure required NLTK data is downloaded during startup
+nltk_data_packages = ["punkt", "averaged_perceptron_tagger", "wordnet"]
+for package in nltk_data_packages:
     try:
-        test_file_path = os.path.join(nltk_data_dir, 'test_write.txt')
-        with open(test_file_path, 'w') as test_file:
-            test_file.write('Write test successful.')
-        os.remove(test_file_path)  # Clean up after the test
-        logger.info("Write permissions for nltk_data directory verified.")
+        nltk.download(package, download_dir=nltk_data_dir)
     except Exception as e:
-        logger.error(f"Write permissions test for nltk_data directory failed: {e}")
+        print(f"Error downloading NLTK package {package}: {e}")
 
-    # Start the Flask app
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host="0.0.0.0", port=port)
+# Ensure required TextBlob corpora are downloaded during startup
+download_corpora()
+
+# Test write permissions for the nltk_data directory
+try:
+    test_file_path = os.path.join(nltk_data_dir, 'test_write.txt')
+    with open(test_file_path, 'w') as test_file:
+        test_file.write('Write test successful.')
+    os.remove(test_file_path)  # Clean up after the test
+    logger.info("Write permissions for nltk_data directory verified.")
+except Exception as e:
+    logger.error(f"Write permissions test for nltk_data directory failed: {e}")
+
+# Start the Flask app
+port = int(os.environ.get('PORT', 5000))
+app.run(host="0.0.0.0", port=port)
