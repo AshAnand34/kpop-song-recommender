@@ -5,7 +5,7 @@
 
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: process.env.VUE_APP_API_URL || 'http://localhost:5000',
+  BASE_URL: process.env.VUE_APP_API_URL || 'https://kpop-song-recommender.onrender.com',
   ENDPOINTS: {
     RECOMMEND: '/recommend'
   }
