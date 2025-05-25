@@ -1,0 +1,259 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+ * Consolidated styles for KPOP Mood AI Recommender 
+ * This file combines all styles from public/styles.css and assets/styles.css
+ */
+
+/* General Styles */
+body {
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(to bottom, #ff9a9e, #fad0c4);
+  color: #333;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+h1, h2 {
+  font-family: 'Montserrat', sans-serif;
+  color: #ff6f61;
+}
+
+/* Header Styles */
+.app-header {
+  background-color: #ff6f61;
+  color: white;
+  padding: 20px 10px;
+  text-align: center;
+  font-size: 36px;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin: 0 20px;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+/* Mood Input Styles */
+.mood-input {
+  text-align: center;
+  margin: 20px;
+}
+
+.mood-buttons button {
+  background-color: #ff6f61;
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  margin: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.mood-buttons button:hover {
+  background-color: #ff8566;
+  transform: scale(1.05);
+}
+
+textarea {
+  width: 90%;
+  height: 120px;
+  margin-top: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 16px;
+  color: #333;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+textarea:focus {
+  border-color: #ff6f61;
+  box-shadow: 0 0 5px rgba(255, 111, 97, 0.5);
+  outline: none;
+}
+
+/* Song List Styles */
+.song-list {
+  margin: 20px;
+  text-align: center;
+}
+
+.song-list ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.song-list li {
+  background: white;
+  margin: 10px auto;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+}
+
+.song-list a {
+  color: #ff6f61;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.song-list a:hover {
+  text-decoration: underline;
+}
+
+/* Submit Button */
+button[class="mood-submit"] {
+  background: linear-gradient(to right, #ff7e5f, #feb47b); /* Vibrant gradient background */
+  color: white;
+  border: none;
+  padding: 14px 35px;
+  margin-top: 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+}
+
+.dark button[class="mood-submit"] {
+  color: black;
+}
+
+button[class="mood-submit"]:hover {
+  background: linear-gradient(to right, #ff6a4d, #ff9a76);
+  transform: scale(1.1);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Pagination Controls */
+.pagination-controls {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.pagination-controls button {
+  background-color: #ff6f61;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.dark .pagination-controls button {
+  background-color: #ff8566;
+  color: black;
+}
+
+.pagination-controls button:hover {
+  background-color: #ff8566;
+}
+
+.pagination-controls button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.dark .pagination-controls button:disabled {
+  background-color: #555;
+  color: black;
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+  background: #121212;
+  color: #ffffff;
+}
+
+.app-header.dark-mode,
+#app.dark > .app-header {
+  background-color: #1e1e1e;
+  color: #ffffff;
+}
+
+.mood-input.dark-mode {
+  background-color: #1e1e1e;
+  color: #ffffff;
+}
+
+.song-list.dark-mode li,
+.dark-mode .song-list li {
+  background: #1e1e1e;
+  color: #ffffff;
+  box-shadow: 0 4px 6px rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode nav a {
+  color: #ffffff;
+}
+
+.dark-mode textarea,
+textarea.dark-mode {
+  background-color: #333333;
+  color: #ffffff;
+  border: 1px solid #555555;
+}
+
+.home.dark .mood-buttons button,
+.dark-mode .mood-buttons button {
+  background-color: #ff8566;
+  color: black;
+}
+
+/* Dark mode for App */
+#app.dark {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+/* Dark Mode Button */
+button.dark-mode-toggle {
+  background-color: #ff6f61;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+button.dark-mode-toggle:hover {
+  background-color: #ff8566;
+  transform: scale(1.05);
+}
+
+/* Page Title */
+.app-header {
+  font-size: 36px; /* Increased font size for the title */
+}
+
+/* Mood Section Texts */
+.mood-section-title {
+  font-size: 24px; /* Increased font size */
+  font-weight: bold; /* Made text bold */
+  margin-bottom: 15px;
+  text-align: center;
+}

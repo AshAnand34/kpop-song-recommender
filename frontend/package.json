@@ -1,0 +1,30 @@
+{
+  "name": "kpop-song-recommender",
+  "version": "1.0.0",
+  "description": "A Vue.js application that recommends KPOP songs based on user mood.",
+  "main": "src/main.js",
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "axios": "^1.9.0",
+    "ejs": "^3.1.10",
+    "vue": "^3.0.0",
+    "vue-router": "^4.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss7-compat": "^2.2.17",
+    "@vue/cli-service": "^5.0.8",
+    "@vue/compiler-sfc": "^3.0.0",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "postcss-cli": "^11.0.1",
+    "tailwindcss": "^4.1.7",
+    "vue-loader": "^16.8.3",
+    "webpack": "^5.99.8"
+  },
+  "author": "Aashish Anand",
+  "license": "MIT"
+}
