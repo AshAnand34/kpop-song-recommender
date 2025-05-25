@@ -10,7 +10,7 @@ import threading
 import time
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "https://kpop-moodify.netlify.app"}})
 
 # Load environment variables
 load_dotenv()
