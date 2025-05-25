@@ -243,7 +243,7 @@ for package in nltk_data_packages:
         print(f"Error downloading NLTK package {package}: {e}")
 
 # Ensure required TextBlob corpora are downloaded during startup
-download_corpora()
+download_corpora.download_all()
 
 # Test write permissions for the nltk_data directory
 try:
