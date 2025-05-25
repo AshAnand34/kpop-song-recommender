@@ -55,6 +55,9 @@ def remove_duplicates(recommendations):
             seen_ids.add(song_id)
     return unique_songs
 
+# Reduce the number of concurrent threads for Spotify API calls
+MAX_THREADS = 5  # Limit the number of threads to reduce memory usage
+
 @app.route('/recommend', methods=['POST'])
 def recommend():
     # Extract mood input from the request
@@ -88,7 +91,8 @@ def recommend():
 
     urls = [f'https://api.spotify.com/v1/search?q={query}&type=track&limit=20&offset={offset}' for offset in range(0, 100, 20)]
 
-    with ThreadPoolExecutor() as executor:
+    # Use ThreadPoolExecutor with a limited number of threads
+    with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
         results_list = list(executor.map(fetch_page, urls))
 
     songs = []
@@ -102,7 +106,7 @@ def recommend():
             track_items.append(item)
             artist_ids.append(item['artists'][0]['id'])  # Collect artist IDs
 
-    # Fetch artist details in parallel using threading
+    # Fetch artist details in parallel with limited threads
     def fetch_artist_details(artist_id):
         artist_url = f'https://api.spotify.com/v1/artists/{artist_id}'
         artist_response = requests.get(artist_url, headers=headers)
@@ -111,7 +115,7 @@ def recommend():
     unique_artist_ids = list(set(artist_ids))  # Remove duplicate artist IDs
     artist_genre_map = {}
 
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
         artist_details_list = list(executor.map(fetch_artist_details, unique_artist_ids))
 
     for artist_details in artist_details_list:
